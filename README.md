@@ -1,7 +1,7 @@
 # android-json-data-cache
 Json data cache for Android using SQLite.
 
-You can use this cache to store you web services results and retrieve them in offline mode.
+You can use this cache to store your web services results and retrieve them in offline mode.
 
 Simple as this sample :
 ```java
