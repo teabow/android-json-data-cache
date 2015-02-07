@@ -21,7 +21,7 @@ try {
 }
 ```
 
-To use the DataController class as it, you have to add this `db_conf` file in your res/raw directory :
+To use the DataController class as it, you have to add this `db_conf` file in your `res/raw` app directory :
 ```
 db.version=1
 db.name=jsonData
