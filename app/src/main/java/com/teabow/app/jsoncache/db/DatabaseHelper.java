@@ -1,19 +1,19 @@
 package com.teabow.app.jsoncache.db;
 
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+import com.teabow.app.jsoncache.R;
+import com.teabow.app.jsoncache.db.model.DBField;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Properties;
-import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteDatabase.CursorFactory;
-import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
-
-import com.teabow.app.jsoncache.R;
-import com.teabow.app.jsoncache.db.model.DBField;
 
 
 public class DatabaseHelper extends SQLiteOpenHelper {
@@ -37,29 +37,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     
     private static final String DB_FIELD_CONSTRAINT_SUFFIX =  ".constraint";
     
-    private HashMap<String, DBField> fieldsMap;
-    
-    private Properties properties;
+    private final HashMap<String, DBField> fieldsMap;
+    private final Properties properties;
     
     public DatabaseHelper(Context context) {
     	super(context, DB_NAME, null, DB_VERSION);
-    	this.properties = new Properties();
-		InputStream rawResource = context.getResources().openRawResource(
-				R.raw.db_conf);
+    	properties = new Properties();
+		InputStream rawResource = context.getResources().openRawResource(R.raw.db_conf);
 		try {
-			this.properties.load(rawResource);
+			properties.load(rawResource);
 		} catch (IOException e) {
-			Log.e(getClass().getCanonicalName(), "Cannot load proerties.", e);
+			Log.e(getClass().getCanonicalName(), "Cannot load properties.", e);
 		}
 		
-		this.fieldsMap = new HashMap<String, DBField>();
-		this.setFields();
+		fieldsMap = new HashMap<>();
+		setFields();
     }
-
-	public DatabaseHelper(Context context, String name, CursorFactory factory,
-			int version) {
-		super(context, name, factory, version);
-	}
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
@@ -82,9 +75,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		
 		StringBuilder request = new StringBuilder();
 		request.append("CREATE TABLE IF NOT EXISTS ").append(this.properties.getProperty(TABLE)).append("(");
-		ArrayList<String> primaryKeys = new ArrayList<String>();
+		ArrayList<String> primaryKeys = new ArrayList<>();
 		
-		ArrayList<DBField> dbFields = new ArrayList<DBField>();
+		ArrayList<DBField> dbFields = new ArrayList<>();
 		for (String key : this.fieldsMap.keySet()) {
 			DBField dbField = this.fieldsMap.get(key);
 			dbFields.add(dbField);
@@ -112,9 +105,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	}
 	
 	private void setFields() {
-		
 		for (Object entry : this.properties.keySet()) {
-		
 			if (entry instanceof String) {
 				
 				String sEntry = (String) entry;
@@ -122,25 +113,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 				if (sEntry.startsWith(DB_FIELD_PREFIX)) {
 					if (sEntry.endsWith(DB_FIELD_NAME_SUFFIX)) {
 						String fieldName = this.properties.getProperty(sEntry);
-						DBField dbField = null;
+						DBField dbField;
 						if (this.fieldsMap.get(fieldName) != null) {
 							dbField = this.fieldsMap.get(fieldName);
 							dbField.setName(fieldName);
-						}
-						else {
+						} else {
 							dbField = new DBField();
 							dbField.setName(fieldName);
 							this.fieldsMap.put(this.properties.getProperty(sEntry), dbField);
 						}
-					}
-					else if (sEntry.endsWith(DB_FIELD_TYPE_SUFFIX)) {
+					} else if (sEntry.endsWith(DB_FIELD_TYPE_SUFFIX)) {
 						String fieldName = sEntry.substring(DB_FIELD_PREFIX.length(), sEntry.indexOf(DB_FIELD_TYPE_SUFFIX));
-						DBField dbField = null;
+						DBField dbField;
 						if (this.fieldsMap.get(fieldName) != null) {
 							dbField = this.fieldsMap.get(fieldName);
 							dbField.setType(this.properties.getProperty(sEntry));
-						}
-						else {
+						} else {
 							dbField = new DBField();
 							dbField.setType(this.properties.getProperty(sEntry));
 							this.fieldsMap.put(fieldName, dbField);
@@ -148,12 +136,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 					}
 					else if (sEntry.endsWith(DB_FIELD_COLUMN_SUFFIX)) {
 						String fieldName = sEntry.substring(DB_FIELD_PREFIX.length(), sEntry.indexOf(DB_FIELD_COLUMN_SUFFIX));
-						DBField dbField = null;
+						DBField dbField;
 						if (this.fieldsMap.get(fieldName) != null) {
 							dbField = this.fieldsMap.get(fieldName);
 							dbField.setColumnIndex(Integer.parseInt(this.properties.getProperty(sEntry)));
-						}
-						else {
+						} else {
 							dbField = new DBField();
 							dbField.setColumnIndex(Integer.parseInt(this.properties.getProperty(sEntry)));
 							this.fieldsMap.put(fieldName, dbField);
@@ -161,12 +148,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 					}
 					else if (sEntry.endsWith(DB_FIELD_CONSTRAINT_SUFFIX)) {
 						String fieldName = sEntry.substring(DB_FIELD_PREFIX.length(), sEntry.indexOf(DB_FIELD_CONSTRAINT_SUFFIX));
-						DBField dbField = null;
+						DBField dbField;
 						if (this.fieldsMap.get(fieldName) != null) {
 							dbField = this.fieldsMap.get(fieldName);
 							dbField.setConstraint(DBField.Constraint.valueOf(this.properties.getProperty(sEntry)));
-						}
-						else {
+						} else {
 							dbField = new DBField();
 							dbField.setConstraint(DBField.Constraint.valueOf(this.properties.getProperty(sEntry)));
 							this.fieldsMap.put(fieldName, dbField);

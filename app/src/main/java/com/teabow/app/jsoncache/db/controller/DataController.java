@@ -1,8 +1,5 @@
 package com.teabow.app.jsoncache.db.controller;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -13,6 +10,9 @@ import android.util.Log;
 import com.teabow.app.jsoncache.db.DatabaseHelper;
 import com.teabow.app.jsoncache.db.listener.DBResultListener;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class DataController {
 	
 	private static final String REQUEST =  "request";
@@ -22,7 +22,7 @@ public class DataController {
 	
 	private static final int RESULT_COLUM_INDEX =  2;
 	
-	private Context context;
+	private final Context context;
 	
 	public DataController(Context context) {
 		this.context = context;
@@ -36,7 +36,7 @@ public class DataController {
 		new SaveDataAsyncTask().execute(request, params, result, lastDate);
 	}
 
-	private long pSaveData(String request, String params, String result, long lastDate) {
+	private void pSaveData(String request, String params, String result, long lastDate) {
 		
 		DatabaseHelper databaseHelper = new DatabaseHelper(context);
 		SQLiteDatabase db = databaseHelper.getWritableDatabase();
@@ -47,18 +47,17 @@ public class DataController {
 	    values.put(RESULT, result);
 	    values.put(LAST_DATE, lastDate);
 		
-		// insert row
-	    StringBuilder delete = new StringBuilder();
-	    delete.append(REQUEST).append(" LIKE '").append(request).
-		append("' AND ").append(PARAMS).append(" LIKE '").append(params).append("'");
-	    
-	    db.delete(databaseHelper.getTableName(), delete.toString(), null);
-	    long dataId = db.insert(databaseHelper.getTableName(), null, values);
-		
-	    Log.d("DEBUG", "pSaveData : " + request + "(" + params + ") => " + dataId);
-	    
-	    db.close();
-	    return dataId;
+		// Update row if exists, otherwise insert new data
+		if (hasRequest(databaseHelper, db, request, params)) {
+			db.update(databaseHelper.getTableName(), values, REQUEST + " LIKE '" + request
+					+ "' AND " + PARAMS + " LIKE '" + params + "'", null);
+			Log.d("DEBUG", "pUpdateData : " + request);
+		} else {
+			db.insert(databaseHelper.getTableName(), null, values);
+			Log.d("DEBUG", "pSaveData : " + request);
+		}
+
+		db.close();
 	}
 	
 	private JSONObject pGetData(String request, String params) throws JSONException {
@@ -67,14 +66,10 @@ public class DataController {
 		
 		DatabaseHelper databaseHelper = new DatabaseHelper(context);
 		SQLiteDatabase db = databaseHelper.getReadableDatabase();
-		
-		StringBuilder query = new StringBuilder();
-		query.append("SELECT * FROM ").append(databaseHelper.getTableName()).
-		append(" WHERE ").append(REQUEST).append(" LIKE '").append(request).
-		append("' AND ").append(PARAMS).append(" LIKE '").append(params).append("'");
-		
+
 		JSONObject result = null;
-		Cursor cursor = db.rawQuery(query.toString(), null);
+		Cursor cursor = db.rawQuery("SELECT * FROM " + databaseHelper.getTableName() + " WHERE "
+				+ REQUEST + " LIKE '" + request + "' AND " + PARAMS + " LIKE '" + params + "'", null);
 		if (cursor != null) {
 			if (cursor.moveToFirst()) {
 				result = new JSONObject(cursor.getString(RESULT_COLUM_INDEX));
@@ -87,37 +82,58 @@ public class DataController {
 		db.close();
 		return result;
 	}
-	
-	class SaveDataAsyncTask extends AsyncTask<Object, String, Long> {
 
-		@Override
-		protected Long doInBackground(Object... args) {
-			String request = (String) args[0];
-			String params = (String) args[1];
-			String result = (String) args[2];
-			long lastDate = (Long) args[3];
-			return pSaveData(request, params, result, lastDate);
+	private boolean hasRequest(DatabaseHelper databaseHelper, SQLiteDatabase db, String request, String params) {
+		boolean hasRequest = false;
+		Cursor cursor = db.rawQuery("SELECT * FROM " + databaseHelper.getTableName() + " WHERE "
+				+ REQUEST + " LIKE '" + request + "' AND " + PARAMS + " LIKE '" + params + "'", null);
+		if (cursor != null) {
+			if (cursor.moveToFirst()) {
+				hasRequest = true;
+			}
+			cursor.close();
 		}
+		return hasRequest;
 	}
 	
-	class GetDataAsyncTask extends AsyncTask<Object, String, Void> {
+	private class SaveDataAsyncTask extends AsyncTask<Object, String, Void> {
 
 		@Override
 		protected Void doInBackground(Object... args) {
 			String request = (String) args[0];
 			String params = (String) args[1];
-			DBResultListener listener = (DBResultListener) args[2];
-			JSONObject result = null;
-			try {
-				result = pGetData(request, params);
-			} catch (JSONException e) {
-				Log.e(getClass().getCanonicalName(), e.getMessage());
-			}
-			listener.onDBResult(result);
+			String result = (String) args[2];
+			long lastDate = (Long) args[3];
+			pSaveData(request, params, result, lastDate);
 			return null;
 		}
 	}
 	
-	
+	private class GetDataAsyncTask extends AsyncTask<Object, String, JSONObject> {
 
+		private DBResultListener listener;
+
+		@Override
+		protected JSONObject doInBackground(Object... args) {
+			String request = (String) args[0];
+			String params = (String) args[1];
+			listener = (DBResultListener) args[2];
+			JSONObject result;
+			try {
+				result = pGetData(request, params);
+			} catch (Exception e) {
+				Log.e(getClass().getCanonicalName(), e.getMessage());
+				return null;
+			}
+			return result;
+		}
+
+		@Override
+		protected void onPostExecute(JSONObject result) {
+			super.onPostExecute(result);
+			if (listener != null) {
+				listener.onDBResult(result);
+			}
+		}
+	}
 }
