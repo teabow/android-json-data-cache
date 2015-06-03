@@ -29,11 +29,11 @@ public class DataController {
 	}
 	
 	public void getData(String request, String params, DBResultListener listener) {
-		new GetDataAsyncTask().execute(request, params, listener);
+		new GetDataAsyncTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, request, params, listener);
 	}
 	
 	public void saveData(String request, String params, String result, long lastDate) {
-		new SaveDataAsyncTask().execute(request, params, result, lastDate);
+		new SaveDataAsyncTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, request, params, result, lastDate);
 	}
 
 	private void pSaveData(String request, String params, String result, long lastDate) {
