@@ -59,6 +59,13 @@ public class DataController {
 
 		db.close();
 	}
+
+	public void clearCachedData() {
+		DatabaseHelper databaseHelper = new DatabaseHelper(context);
+		SQLiteDatabase db = databaseHelper.getWritableDatabase();
+		db.execSQL("DROP TABLE IF EXISTS " + databaseHelper.getTableName());
+		db.close();
+	}
 	
 	private JSONObject pGetData(String request, String params) throws JSONException {
 		
