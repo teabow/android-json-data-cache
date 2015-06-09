@@ -64,6 +64,7 @@ public class DataController {
 		DatabaseHelper databaseHelper = new DatabaseHelper(context);
 		SQLiteDatabase db = databaseHelper.getWritableDatabase();
 		db.execSQL("DROP TABLE IF EXISTS " + databaseHelper.getTableName());
+        db.execSQL(databaseHelper.createTableRequest());
 		db.close();
 	}
 	

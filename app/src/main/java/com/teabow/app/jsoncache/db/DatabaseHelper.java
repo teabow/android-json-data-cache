@@ -71,7 +71,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		return this.properties.getProperty(TABLE);
 	}
 	
-	private String createTableRequest() {
+	public String createTableRequest() {
 		
 		StringBuilder request = new StringBuilder();
 		request.append("CREATE TABLE IF NOT EXISTS ").append(this.properties.getProperty(TABLE)).append("(");
