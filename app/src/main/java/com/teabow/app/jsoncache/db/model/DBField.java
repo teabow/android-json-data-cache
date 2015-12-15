@@ -1,10 +1,12 @@
 package com.teabow.app.jsoncache.db.model;
 
+import android.support.annotation.NonNull;
+
 public class DBField implements Comparable<DBField> {
 
 	public enum Constraint {
 		PRIMARY, NONE
-	};
+	}
 	
 	private String name;
 	
@@ -39,8 +41,7 @@ public class DBField implements Comparable<DBField> {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + columnIndex;
-		result = prime * result
-				+ ((constraint == null) ? 0 : constraint.hashCode());
+		result = prime * result + ((constraint == null) ? 0 : constraint.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		return result;
@@ -91,7 +92,7 @@ public class DBField implements Comparable<DBField> {
 	}
 
 	@Override
-	public int compareTo(DBField another) {
+	public int compareTo(@NonNull DBField another) {
 		return this.columnIndex - another.columnIndex;
 	}
 	
